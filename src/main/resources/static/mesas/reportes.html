@@ -36,28 +36,28 @@
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="fw-bold text-dark mb-0">Reporte del Día</h4>
-            <button class="btn btn-success d-flex align-items-center gap-2" onclick="exportarExcel()">
+            <button class="btn btn-dark d-flex align-items-center gap-2" onclick="exportarExcel()">
                 <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Exportar a Excel
             </button>
         </div>
         
         <div class="row g-4 mb-4">
             <div class="col-md-4">
-                <div class="stat-card border-start border-4 border-warning">
+                <div class="stat-card border-start border-4 border-dark">
                     <p class="text-muted small fw-semibold text-uppercase mb-1">Caja Inicial (Apertura)</p>
                     <h3 class="fw-bold text-dark mb-0" id="cajaInicial">S/ 0.00</h3>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="stat-card border-start border-4 border-success">
+                <div class="stat-card border-start border-4 border-secondary">
                     <p class="text-muted small fw-semibold text-uppercase mb-1">Ventas Totales (Ingresos)</p>
-                    <h3 class="fw-bold text-success mb-0" id="totalVentas">S/ 0.00</h3>
+                    <h3 class="fw-bold text-dark mb-0" id="totalVentas">S/ 0.00</h3>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="stat-card border-start border-4 border-primary">
+                <div class="stat-card border-start border-4 border-dark">
                     <p class="text-muted small fw-semibold text-uppercase mb-1">Ganancias del Día (Total - Inicial)</p>
-                    <h3 class="fw-bold text-primary mb-0" id="gananciasDia">S/ 0.00</h3>
+                    <h3 class="fw-bold text-dark mb-0" id="gananciasDia">S/ 0.00</h3>
                 </div>
             </div>
         </div>
@@ -72,19 +72,19 @@
             <div class="col-md-3">
                 <div class="stat-card">
                     <p class="text-muted small fw-semibold text-uppercase mb-1">Propinas</p>
-                    <h3 class="fw-bold text-warning mb-0" id="totalPropinas">S/ 0.00</h3>
+                    <h3 class="fw-bold text-dark mb-0" id="totalPropinas">S/ 0.00</h3>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card">
                     <p class="text-muted small fw-semibold text-uppercase mb-1">Efectivo</p>
-                    <h3 class="fw-bold text-success mb-0" id="ventasEfectivo">S/ 0.00</h3>
+                    <h3 class="fw-bold text-dark mb-0" id="ventasEfectivo">S/ 0.00</h3>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card">
                     <p class="text-muted small fw-semibold text-uppercase mb-1">Tarjeta / Transf.</p>
-                    <h3 class="fw-bold text-info mb-0" id="ventasDigitales">S/ 0.00</h3>
+                    <h3 class="fw-bold text-dark mb-0" id="ventasDigitales">S/ 0.00</h3>
                 </div>
             </div>
         </div>
