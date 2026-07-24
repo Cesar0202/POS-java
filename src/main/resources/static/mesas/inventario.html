@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario - POS</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #F7F7F8;
+            color: #111827;
+        }
+        .navbar-brand { font-weight: 600; }
+        .table-inventario { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .table-inventario th { background-color: #F8F9FA; font-weight: 600; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px; }
+        .btn-edit { background: transparent; border: 1px solid #dee2e6; color: #495057; padding: 0.25rem 0.5rem; }
+        .btn-edit:hover { background: #e9ecef; }
+        input.edit-input { width: 80px; text-align: center; }
+        input.edit-input-name { width: 150px; }
+    </style>
+</head>
+<body>
+    
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1 d-flex align-items-center gap-2">
+                <i data-lucide="package" class="w-5 h-5"></i> POS - Inventario
+            </span>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="index.html">Volver a Mesas</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-2">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold mb-0">Control de Productos y Stock</h3>
+            <button class="btn btn-dark d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalNuevoProducto">
+                <i data-lucide="plus" class="w-4 h-4"></i> Nuevo Producto
+            </button>
+        </div>
+
+        <div class="table-responsive table-inventario border">
+            <table class="table table-hover mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th class="border-0 px-4 text-muted fw-semibold">ID</th>
+                        <th class="border-0 text-muted fw-semibold" style="width: 30%;">PRODUCTO</th>
+                        <th class="border-0 text-muted fw-semibold">CATEGORÍA</th>
+                        <th class="border-0 text-center text-muted fw-semibold">PRECIO (S/)</th>
+                        <th class="border-0 text-center text-muted fw-semibold">STOCK ACTUAL</th>
+                        <th class="border-0 px-4 text-end text-muted fw-semibold">ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaInventario">
+                    <!-- Productos se cargan aquí -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Nuevo Producto -->
+    <div class="modal fade" id="modalNuevoProducto" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Agregar Nuevo Producto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre del Producto</label>
+                        <input type="text" class="form-control" id="nuevoProdNombre">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Categoría</label>
+                        <select class="form-select" id="nuevoProdCategoria">
+                            <!-- Categorias cargadas via JS -->
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Precio (S/)</label>
+                            <input type="number" step="0.01" class="form-control" id="nuevoProdPrecio">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Stock Inicial</label>
+                            <input type="number" class="form-control" id="nuevoProdStock">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="crearProducto()">Guardar Producto</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        lucide.createIcons();
+        let categoriasCache = [];
+        
+        async function cargarInventario() {
+            try {
+                const response = await fetch('/api/productos');
+                const productos = await response.json();
+                renderizarInventario(productos);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function renderizarInventario(productos) {
+            const tbody = document.getElementById('tablaInventario');
+            tbody.innerHTML = '';
+            
+            productos.forEach(prod => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="px-4 text-muted">#${prod.id}</td>
+                        <td class="fw-medium">
+                            <input type="text" class="form-control form-control-sm edit-input-name" id="nombre-${prod.id}" value="${prod.nombre}">
+                        </td>
+                        <td>
+                            <select class="form-select form-select-sm" id="categoria-${prod.id}">
+                                <option value="">Sin Categoría</option>
+                                ${categoriasCache.map(c => `<option value="${c.id}" ${prod.categoria && prod.categoria.id === c.id ? 'selected' : ''}>${c.nombre}</option>`).join('')}
+                            </select>
+                        </td>
+                        <td class="text-center">
+                            <div class="d-inline-flex align-items-center gap-2">
+                                <span>S/</span>
+                                <input type="number" step="0.01" class="form-control form-control-sm edit-input" id="precio-${prod.id}" value="${prod.precio.toFixed(2)}">
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <input type="number" class="form-control form-control-sm edit-input mx-auto" id="stock-${prod.id}" value="${prod.stock}">
+                        </td>
+                        <td class="px-4 text-end">
+                            <div class="d-inline-flex gap-2 justify-content-end">
+                                <button class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1" onclick="guardarCambios(${prod.id})">
+                                    <i data-lucide="save" class="w-4 h-4"></i> Guardar
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1" onclick="eliminarProducto(${prod.id})">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            lucide.createIcons();
+        }
+
+        async function guardarCambios(id) {
+            const nombre = document.getElementById(`nombre-${id}`).value.trim();
+            const precio = parseFloat(document.getElementById(`precio-${id}`).value);
+            const stock = parseInt(document.getElementById(`stock-${id}`).value);
+            const categoriaIdVal = document.getElementById(`categoria-${id}`).value;
+            const categoriaId = categoriaIdVal ? parseInt(categoriaIdVal) : null;
+            
+            const payload = { nombre, precio, stock };
+            if (categoriaId) payload.categoriaId = categoriaId;
+
+            try {
+                const response = await fetch(`/api/productos/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (response.ok) {
+                    // Mostrar feedback visual
+                    const btn = document.querySelector(`button[onclick="guardarCambios(${id})"]`);
+                    const oldHtml = btn.innerHTML;
+                    btn.classList.replace('btn-primary', 'btn-success');
+                    btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> Guardado';
+                    lucide.createIcons();
+                    
+                    setTimeout(() => {
+                        btn.classList.replace('btn-success', 'btn-primary');
+                        btn.innerHTML = oldHtml;
+                        lucide.createIcons();
+                    }, 2000);
+                }
+            } catch (error) {
+                console.error('Error guardando:', error);
+                alert('Error al guardar cambios');
+            }
+        }
+
+        async function eliminarProducto(id) {
+            if (!confirm('¿Estás seguro de que deseas eliminar este producto?')) return;
+            
+            try {
+                const response = await fetch(`/api/productos/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    cargarInventario();
+                } else {
+                    alert('Error al eliminar producto');
+                }
+            } catch (error) {
+                console.error('Error eliminando:', error);
+                alert('Error al eliminar producto');
+            }
+        }
+
+        async function cargarCategorias() {
+            try {
+                const response = await fetch('/api/categorias');
+                if (response.ok) {
+                    const categorias = await response.json();
+                    categoriasCache = categorias;
+                    const select = document.getElementById('nuevoProdCategoria');
+                    select.innerHTML = categorias.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+                }
+            } catch (error) {
+                console.error('Error cargando categorias:', error);
+            }
+        }
+
+        async function crearProducto() {
+            const nombre = document.getElementById('nuevoProdNombre').value.trim();
+            const precio = parseFloat(document.getElementById('nuevoProdPrecio').value);
+            const stock = parseInt(document.getElementById('nuevoProdStock').value);
+            const categoriaId = parseInt(document.getElementById('nuevoProdCategoria').value);
+
+            if (!nombre || isNaN(precio) || isNaN(stock) || isNaN(categoriaId)) {
+                alert('Por favor complete todos los campos correctamente.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/productos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre, precio, stock, categoriaId })
+                });
+
+                if (response.ok) {
+                    // Cerrar modal y limpiar
+                    const modalEl = document.getElementById('modalNuevoProducto');
+                    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                    modal.hide();
+                    
+                    document.getElementById('nuevoProdNombre').value = '';
+                    document.getElementById('nuevoProdPrecio').value = '';
+                    document.getElementById('nuevoProdStock').value = '';
+                    
+                    // Recargar tabla
+                    cargarInventario();
+                } else {
+                    alert('Error al crear el producto.');
+                }
+            } catch (error) {
+                console.error('Error creando producto:', error);
+                alert('Error en el servidor.');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            cargarInventario();
+            cargarCategorias();
+        });
+    </script>
+</body>
+</html>

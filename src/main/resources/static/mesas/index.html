@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS Profesional</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-light">
+    
+    <nav class="navbar navbar-dark bg-dark mb-4">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">POS - Gestión de Mesas</span>
+            <div class="navbar-nav ms-auto d-flex flex-row gap-3">
+                <button class="btn btn-sm btn-outline-warning d-flex align-items-center gap-1" id="btnCaja" onclick="toggleCaja()">
+                    <i data-lucide="lock" class="w-4 h-4"></i> Caja Cerrada
+                </button>
+                <a class="nav-link text-white d-flex align-items-center gap-1" href="reportes.html" id="linkReportes">
+                    <i data-lucide="bar-chart-2" class="w-4 h-4"></i> Reportes
+                </a>
+                <a class="nav-link text-white d-flex align-items-center gap-1" href="inventario.html" id="linkInventario">
+                    <i data-lucide="package" class="w-4 h-4"></i> Inventario
+                </a>
+                <a class="nav-link text-danger d-flex align-items-center gap-1" href="/api/auth/logout">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> Salir
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold mb-0">Mesas</h2>
+            <button id="btnAgregarMesa" class="btn btn-dark d-flex align-items-center gap-2">
+                <i data-lucide="plus" class="w-4 h-4"></i> Agregar Mesa
+            </button>
+        </div>
+
+        <div id="loading" class="text-center my-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+
+        <div id="gridMesas" class="row row-cols-1 row-cols-sm-2 row-cols-md-4 row-cols-lg-6 g-4 d-none">
+            <!-- Las tarjetas de mesas se renderizarán aquí -->
+        </div>
+    </div>
+
+    <!-- Modal Detalles Venta -->
+    <div class="modal fade" id="modalVenta" tabindex="-1" aria-labelledby="modalVentaLabel" aria-hidden="true" data-bs-backdrop="static">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header bg-dark text-white">
+            <h5 class="modal-title" id="modalVentaLabel">Mesa <span id="spanMesaActiva"></span> - Pedido #<span id="pedidoActivoId"></span></h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-0">
+            <div class="row g-0">
+                <!-- Lado Izquierdo: Productos -->
+                <div class="col-md-7 p-3 bg-light border-end">
+                    <h5 class="mb-3">Agregar Productos</h5>
+                    <!-- Pestañas de Categorías -->
+                    <ul class="nav nav-pills mb-3 gap-2" id="tabsCategorias">
+                        <!-- Las pestañas se renderizarán aquí -->
+                    </ul>
+                    <div id="gridProductos" class="row row-cols-2 row-cols-md-3 g-2">
+                        <!-- Botones de productos -->
+                    </div>
+                </div>
+                
+                <!-- Lado Derecho: Cuenta -->
+                <div class="col-md-5 p-0 d-flex flex-column" style="height: 85vh;">
+                    <div class="p-3 border-bottom bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Cuenta Actual</h5>
+                        <button class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1" onclick="limpiarCuenta()" id="btnLimpiarCuenta">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i> Limpiar
+                        </button>
+                    </div>
+                    <div class="flex-grow-1 overflow-auto p-3 bg-white">
+                        <table class="table table-hover table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Cant</th>
+                                    <th>Producto</th>
+                                    <th class="text-end">Precio</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaItemsPedido">
+                                <!-- Items de la orden -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="p-3 bg-light border-top">
+                        <div class="mb-3">
+                            <label class="form-label text-muted fw-semibold small text-uppercase">Método de Pago</label>
+                            <div class="d-flex gap-2">
+                                <input type="radio" class="btn-check" name="metodoPago" id="pagoEfectivo" value="EFECTIVO" autocomplete="off" checked>
+                                <label class="btn btn-outline-dark flex-grow-1" for="pagoEfectivo">Efectivo</label>
+
+                                <input type="radio" class="btn-check" name="metodoPago" id="pagoTarjeta" value="TARJETA" autocomplete="off">
+                                <label class="btn btn-outline-dark flex-grow-1" for="pagoTarjeta">Tarjeta</label>
+
+                                <input type="radio" class="btn-check" name="metodoPago" id="pagoTransf" value="TRANSFERENCIA" autocomplete="off">
+                                <label class="btn btn-outline-dark flex-grow-1" for="pagoTransf">App/Transf</label>
+                            </div>
+                        </div>
+                        
+                        <div id="cajaEfectivo" class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label text-muted fw-semibold small text-uppercase mb-0">Monto Recibido (Sin Propina)</label>
+                                <span class="text-primary fw-semibold small d-none" id="labelVuelto">Vuelto: S/<span id="montoVuelto">0.00</span></span>
+                            </div>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white">S/</span>
+                                <input type="number" class="form-control form-control-lg fw-bold" id="montoPagado" step="0.01" min="0">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted fw-semibold small text-uppercase mb-1">Propina Voluntaria</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white">S/</span>
+                                <input type="number" class="form-control fw-bold" id="montoPropina" step="0.01" min="0" value="0.00">
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted">Total a pagar:</span>
+                            <h4 class="mb-0 fw-bold">S/<span id="totalPedido">0.00</span></h4>
+                        </div>
+                        <button type="button" class="btn btn-cobrar btn-lg w-100 d-flex justify-content-center align-items-center gap-2" id="btnCobrarMesa">
+                            <i data-lucide="receipt"></i> PROCESAR COBRO
+                        </button>
+                    </div>
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Ticket -->
+    <div class="modal fade" id="modalTicket" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+      <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0">
+          <div class="modal-body p-4 text-center">
+            <div class="mb-3 text-success">
+                <i data-lucide="check-circle" style="width: 64px; height: 64px; margin: 0 auto;"></i>
+            </div>
+            <h4 class="fw-bold mb-1">Pago Exitoso</h4>
+            <p class="text-muted small mb-4">La mesa ha sido liberada.</p>
+            
+            <div class="bg-light p-3 rounded mb-4 text-start font-monospace small" id="ticketContent">
+                <!-- Se llena con JS -->
+            </div>
+
+            <button type="button" class="btn btn-dark w-100" onclick="imprimirTicket()">
+                <i data-lucide="printer" class="w-4 h-4 me-2"></i> IMPRIMIR TICKET
+            </button>
+            <button type="button" class="btn btn-outline-secondary w-100 mt-2" data-bs-dismiss="modal">
+                Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenedor Oculto para Impresión (Ticket 80mm) -->
+    <div id="ticketPrint" class="d-none d-print-block">
+        <!-- Contenido inyectado por JS -->
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+    <script>
+      lucide.createIcons();
+    </script>
+</body>
+</html>

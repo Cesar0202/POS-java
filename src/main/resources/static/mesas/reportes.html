@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes - POS</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS para exportar a Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #F7F7F8; }
+        .stat-card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.5rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark mb-4">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">POS - Reportes</span>
+            <div class="navbar-nav ms-auto d-flex flex-row gap-3">
+                <a class="nav-link text-white d-flex align-items-center gap-1" href="index.html">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Volver a Mesas
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold text-dark mb-0">Reporte del Día</h4>
+            <button class="btn btn-success d-flex align-items-center gap-2" onclick="exportarExcel()">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Exportar a Excel
+            </button>
+        </div>
+        
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="stat-card border-start border-4 border-warning">
+                    <p class="text-muted small fw-semibold text-uppercase mb-1">Caja Inicial (Apertura)</p>
+                    <h3 class="fw-bold text-dark mb-0" id="cajaInicial">S/ 0.00</h3>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card border-start border-4 border-success">
+                    <p class="text-muted small fw-semibold text-uppercase mb-1">Ventas Totales (Ingresos)</p>
+                    <h3 class="fw-bold text-success mb-0" id="totalVentas">S/ 0.00</h3>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card border-start border-4 border-primary">
+                    <p class="text-muted small fw-semibold text-uppercase mb-1">Ganancias del Día (Total - Inicial)</p>
+                    <h3 class="fw-bold text-primary mb-0" id="gananciasDia">S/ 0.00</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <p class="text-muted small fw-semibold text-uppercase mb-1">Pedidos Cobrados</p>
+                    <h3 class="fw-bold text-dark mb-0" id="pedidosCobrados">0</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <p class="text-muted small fw-semibold text-uppercase mb-1">Propinas</p>
+                    <h3 class="fw-bold text-warning mb-0" id="totalPropinas">S/ 0.00</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <p class="text-muted small fw-semibold text-uppercase mb-1">Efectivo</p>
+                    <h3 class="fw-bold text-success mb-0" id="ventasEfectivo">S/ 0.00</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <p class="text-muted small fw-semibold text-uppercase mb-1">Tarjeta / Transf.</p>
+                    <h3 class="fw-bold text-info mb-0" id="ventasDigitales">S/ 0.00</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="row g-4 mt-1">
+            <div class="col-md-8">
+                <div class="stat-card h-100">
+                    <h5 class="fw-bold mb-4">Ingresos Últimos 7 Días</h5>
+                    <canvas id="chartVentas"></canvas>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card h-100">
+                    <h5 class="fw-bold mb-4">Top 5 Productos</h5>
+                    <canvas id="chartTop"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Interceptor global
+        const originalFetch = window.fetch;
+        window.fetch = async function() {
+            const response = await originalFetch.apply(this, arguments);
+            if (response.url && response.url.includes('/login.html')) {
+                window.location.href = '/mesas/login.html';
+                return new Promise(() => {});
+            }
+            return response;
+        }
+
+        async function cargarReporte() {
+            let totalVentasDia = 0;
+            let cajaMontoInicial = 0;
+
+            try {
+                // 1. Cargar Reporte de Ventas
+                const response = await fetch('/api/reportes/hoy');
+                const data = await response.json();
+                totalVentasDia = data.totalVentas;
+                
+                document.getElementById('totalVentas').textContent = `S/ ${data.totalVentas.toFixed(2)}`;
+                document.getElementById('totalPropinas').textContent = `S/ ${(data.totalPropinas || 0).toFixed(2)}`;
+                document.getElementById('pedidosCobrados').textContent = data.pedidosCobrados;
+                document.getElementById('ventasEfectivo').textContent = `S/ ${data.ventasEfectivo.toFixed(2)}`;
+                document.getElementById('ventasDigitales').textContent = `S/ ${(data.ventasTarjeta + data.ventasTransferencia).toFixed(2)}`;
+            } catch (e) {
+                console.error('Error cargando reportes:', e);
+            }
+
+            try {
+                // 2. Cargar Estado de Caja
+                const resCaja = await fetch('/api/caja/estado');
+                if (resCaja.status === 200) {
+                    const caja = await resCaja.json();
+                    cajaMontoInicial = caja.montoInicial;
+                }
+                
+                document.getElementById('cajaInicial').textContent = `S/ ${cajaMontoInicial.toFixed(2)}`;
+                document.getElementById('gananciasDia').textContent = `S/ ${totalVentasDia.toFixed(2)}`;
+            } catch (e) {
+                console.error('Error cargando caja:', e);
+            }
+
+            try {
+                const resVentas = await fetch('/api/reportes/ventas-7-dias');
+                const dataVentas = await resVentas.json();
+                
+                new Chart(document.getElementById('chartVentas'), {
+                    type: 'bar',
+                    data: {
+                        labels: dataVentas.map(d => d.fecha),
+                        datasets: [{
+                            label: 'Ingresos S/',
+                            data: dataVentas.map(d => d.total),
+                            backgroundColor: '#0d6efd'
+                        }]
+                    },
+                    options: { responsive: true }
+                });
+            } catch(e) { console.error(e); }
+
+            try {
+                const resTop = await fetch('/api/reportes/top-productos');
+                const dataTop = await resTop.json();
+                
+                new Chart(document.getElementById('chartTop'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: dataTop.map(d => d.producto),
+                        datasets: [{
+                            data: dataTop.map(d => d.cantidad),
+                            backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#0dcaf0']
+                        }]
+                    },
+                    options: { responsive: true }
+                });
+            } catch(e) { console.error(e); }
+        }
+
+        async function exportarExcel() {
+            try {
+                // Obtener datos detallados
+                const resDetalle = await fetch('/api/reportes/hoy-detalle');
+                let detalles = [];
+                if (resDetalle.ok) {
+                    detalles = await resDetalle.json();
+                }
+
+                // Recopilar datos de la UI
+                const cajaIni = document.getElementById('cajaInicial').textContent;
+                const ventasTot = document.getElementById('totalVentas').textContent;
+                const propinas = document.getElementById('totalPropinas').textContent;
+                const ganancias = document.getElementById('gananciasDia').textContent;
+                const pedCobrados = document.getElementById('pedidosCobrados').textContent;
+                const efec = document.getElementById('ventasEfectivo').textContent;
+                const dig = document.getElementById('ventasDigitales').textContent;
+
+                const datosResumen = [
+                    ["Reporte del Día", new Date().toLocaleDateString()],
+                    [],
+                    ["Métrica", "Valor"],
+                    ["Caja Inicial (Apertura)", cajaIni],
+                    ["Ventas Totales (Ingresos)", ventasTot],
+                    ["Ganancias del Día", ganancias],
+                    ["Propinas del Día", propinas],
+                    ["Pedidos Cobrados", pedCobrados],
+                    ["Pagos en Efectivo", efec],
+                    ["Pagos Tarjeta/Transf.", dig]
+                ];
+
+                const datosDetalle = [
+                    ["Producto", "Cantidad Vendida", "Total Ingresado (S/)"]
+                ];
+                
+                detalles.forEach(d => {
+                    datosDetalle.push([d.producto, d.cantidad, d.total]);
+                });
+
+                const wb = XLSX.utils.book_new();
+                
+                const wsResumen = XLSX.utils.aoa_to_sheet(datosResumen);
+                XLSX.utils.book_append_sheet(wb, wsResumen, "Resumen Diario");
+
+                const wsDetalle = XLSX.utils.aoa_to_sheet(datosDetalle);
+                XLSX.utils.book_append_sheet(wb, wsDetalle, "Detalle de Productos");
+
+                XLSX.writeFile(wb, `Reporte_Diario_${new Date().toLocaleDateString().replace(/\//g,'-')}.xlsx`);
+            } catch (error) {
+                console.error('Error al exportar:', error);
+                alert('Ocurrió un error al generar el Excel.');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', cargarReporte);
+    </script>
+</body>
+</html>

@@ -1,0 +1,217 @@
+/* Estilos Profesionales para Sistema POS */
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: #F7F7F8;
+    color: #111827;
+}
+
+.mesa-card {
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    cursor: pointer;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    overflow: hidden; /* Para que el borde de color no se salga */
+}
+
+.mesa-card:hover {
+    box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+}
+
+/* Solo pintamos el borde izquierdo como indicador de estado, no todo el fondo */
+.mesa-libre {
+    border-left: 4px solid #10b981; /* Verde esmeralda neutro */
+}
+
+.mesa-ocupada {
+    border-left: 4px solid #ef4444; /* Rojo neutro */
+}
+
+.mesa-reservada {
+    border-left: 4px solid #f59e0b; /* Ambar/Amarillo neutro */
+}
+
+.mesa-numero {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.estado-badge {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    color: #4b5563;
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+/* Modales y tablas rectas y profesionales */
+.modal-content {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.table th {
+    font-weight: 600;
+    color: #4b5563;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.table td {
+    vertical-align: middle;
+    font-size: 0.95rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* Productos (Tarjetas 3D Estilo Stacked) */
+.card-3d-wrapper {
+    position: relative;
+    border-radius: 16px;
+    padding-bottom: 30px; /* Espacio para el footer de color */
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s ease, padding-bottom 0.1s ease;
+    height: 100%;
+}
+
+.card-3d-wrapper:active {
+    transform: translateY(4px);
+    padding-bottom: 26px; /* Efecto de presionar */
+}
+
+.card-3d-content {
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+}
+
+.card-3d-footer {
+    position: absolute;
+    bottom: 8px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    z-index: 1;
+}
+
+/* Colores muy sutiles/neutros para la base de las tarjetas 3D */
+/* Para las mesas */
+.wrapper-green { background-color: #f0fdf4; } /* Verde súper pálido (Libre) */
+.wrapper-green .card-3d-footer { color: #22c55e; }
+
+.wrapper-pink { background-color: #fef2f2; } /* Rojo súper pálido (Ocupada) */
+.wrapper-pink .card-3d-footer { color: #ef4444; }
+
+.wrapper-yellow { background-color: #fffbeb; } /* Ámbar súper pálido (Reservada) */
+.wrapper-yellow .card-3d-footer { color: #f59e0b; }
+
+/* Para los productos (Neutro sólido) */
+.wrapper-neutral { background-color: #f3f4f6; } /* Gris muy claro (bg-gray-100) */
+.wrapper-neutral .card-3d-footer { color: #9ca3af; } /* Gris oscuro (text-gray-400) */
+
+/* Controles de cantidad en tabla */
+.btn-qty {
+    padding: 0.1rem 0.5rem;
+    font-size: 1rem;
+    line-height: 1;
+    border-radius: 4px;
+    color: #4b5563;
+}
+.btn-qty:hover {
+    background-color: #e5e7eb;
+}
+
+/* Botón primario de cobro */
+.btn-cobrar {
+    background-color: #2563EB; /* Azul primario, sólido y profesional */
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+}
+.btn-cobrar:hover {
+    background-color: #1d4ed8;
+}
+
+/* Navbar oscura casi negra */
+.navbar {
+    background-color: #111827 !important;
+}
+
+/* Ocultar botones de borrar por defecto */
+.btn-eliminar-mesa {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    display: none;
+}
+.mesa-card:hover .btn-eliminar-mesa {
+    display: block;
+}
+.btn-eliminar-mesa:hover {
+    color: #ef4444;
+}
+
+/* Estilos para impresión (Tickets) */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #ticketPrint, #ticketPrint * {
+        visibility: visible;
+    }
+    #ticketPrint {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 80mm;
+        font-family: monospace;
+        font-size: 12px;
+        color: black;
+        margin: 0;
+        padding: 0;
+    }
+    .ticket-header {
+        text-align: center;
+        margin-bottom: 10px;
+    }
+    .ticket-table {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    .ticket-table th, .ticket-table td {
+        padding: 2px 0;
+        text-align: left;
+    }
+    .ticket-table th:last-child, .ticket-table td:last-child {
+        text-align: right;
+    }
+    .ticket-footer {
+        text-align: center;
+        margin-top: 10px;
+        border-top: 1px dashed black;
+        padding-top: 10px;
+    }
+}
